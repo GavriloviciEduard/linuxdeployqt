@@ -1435,6 +1435,28 @@ void deployPlugins(const AppDirInfo &appDirInfo, const QString &pluginSourcePath
             appendPluginToList(pluginSourcePath, "accessible", pluginList);
             appendPluginToList(pluginSourcePath, "virtualkeyboard", pluginList);
         }
+
+        // Platform wayland support
+        QStringList platformWaylandPlugins = QDir(
+          pluginSourcePath + QStringLiteral("/platforms")).entryList(QStringList() << QStringLiteral("libqwayland-*.so"));
+        foreach (const QString &plugin, platformWaylandPlugins) {
+            pluginList.append(QStringLiteral("platforms/") + plugin);
+        }
+
+        // Always bundle wayland-* plugins
+        QStringList waylandPluginDirs = QDir(
+          pluginSourcePath).entryList(QStringList() << QStringLiteral("wayland-*"), QDir::NoDot | QDir::NoDotDot | QDir::Dirs);
+        foreach (const QString &plugin, waylandPluginDirs) {
+            QDir pluginDirectory(pluginSourcePath + "/" + plugin);
+            if (pluginDirectory.exists()) {
+                // If it is a plugin directory we will deploy the entire directory
+                QStringList plugins = pluginDirectory.entryList(QStringList() << QStringLiteral("*.so"));
+                foreach (const QString &pluginFile, plugins) {
+                    pluginList.append(plugin + "/" + pluginFile);
+                    LogDebug() << plugin + "/" + pluginFile << "appended";
+                }
+            }
+        }
     }
 
     // Platform OpenGL context
